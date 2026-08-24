@@ -1,0 +1,143 @@
+# brain.py
+from google import genai
+from google.genai import types
+import json
+import os
+
+API_KEY=""
+
+MODEL="gemini-3.5-flash-lite"
+MEMORY_FILE="chat_memory.json"
+history=[ ]
+
+if os.path.exists(MEMORY_FILE):
+    try:
+        with open(MEMORY_FILE , "r") as file:
+            saved_history=json.load(file)
+            for items in saved_history:
+                history.append(
+                    types.content(
+                        role=item["role"],
+                        parts=[
+                            types.part(
+                                text=item["text"]
+                                )
+                            ]
+                        )
+                    )
+                    
+    except Exceptional:
+            history=[ ]
+            
+def save_memory():
+    history=chat.get_history
+    data=[ ]
+    for message in history:
+        if not message.parts:
+            continue
+        text=message.parts[0].text
+        if text is None:
+            continue
+        data.append(
+            {
+                "role":message.role,
+                "text":text
+                }
+            )
+        with open(MEMORY_FILE , "w") as file:
+            json.dump(data,file, indent=4)
+            
+def clear_memory():
+    global chat
+    if os.path.exists(MEMORY_FILE):
+        os.remove(MEMORY_FILE)
+        print("MEGAN: Memory cleared successfully")
+            
+
+# 1. CONNECT TO GEMINI
+client = genai.Client(api_key=API_KEY ) # REPLACE THIS
+
+# 2. CREATE MEGAN WITH MEMORY
+chat = client.chats.create(
+    model=MODEL,
+    history=history,
+    config=types.GenerateContentConfig(
+        system_instruction="You are a friendly AI chatbot named MEGAN:(Multi-Expert Generative Assistant Network) . Answer briefly and directly. Usually use 1-8 sentences.",
+        max_output_tokens=120,
+        temperature=0.7
+    )
+)
+
+# 3. FUNCTION TO TALK TO MEGAN
+def talk_to_megan():
+    while True:
+        
+        user=input("ƳØŮ:").strip()
+        if not user:
+            continue
+        response=chat.send_message(user)
+        #except Exception as e:
+            #print"Error:e"
+        print("MEGAN:",response.text)
+    save_memory( )
+    
+talk_to_megan()
+
+from flask import Flask,request,jsonify,render_template
+from flask_cors import CORS
+#from brain import talk_to_megan
+
+#API_KEY=""
+
+app=Flask(__name__)
+CORS(app)
+@app.route("/")
+def home():
+    return render_template_string('''
+    #<!DOCTYPE html>
+<html>
+<head>
+  <title>MEGAN</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { background: cyan grey; color: white; text-align: left; }
+    #main-title { color: #00ffcc; font-size: 50px; font-style:'poppins', san serif} /* used ID here */
+    
+    .button-box { display: flex; justify-content: center; gap: 20px; } /* FLEX */
+    
+    .green-btn { 
+      background: #00ffcc; color: black; padding: 15px; border-radius: 10px; border: none; 
+      transition: 0.3s; /* for animation */
+    }
+    .green-btn:hover , .red-btn:hover { background: pink; transform: scale(1.1); } /* ANIMATION */
+    
+    .red-btn { background: red; color: white; padding: 15px; border-radius: 10px; border: none; 
+      transition:0.1s;
+    }
+    
+  </style>
+</head>
+<body>
+  <h1 id="main-title">Hi, I'm MEGAN</h1> <!-- ID -->
+  <img src="https://via.placeholder.com/150">
+  <p>I'm your AI assistant.</p>
+  
+  <div class="button-box"> <!-- FLEXBOX WRAPPER -->
+    <button class="green-btn">Chat Now</button>
+    <button class="red-btn">Delete Chat</button>
+  </div>
+  
+  </script>
+</body>
+</html>
+''')
+@app.route("/ chat",methods=[POST])
+def chat_endpoint():
+    data=request.json.get("message")
+    #url=f"https//:generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={API_KEY}"
+    user_message=data["message"]
+    reply=talk_to_megan(user_message)
+    return jsonify({"reply":reply})
+    
+if __name__=="__main__":
+    app.run(debug=True)
