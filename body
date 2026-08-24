@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>MEGAN AI</title>
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <style>
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #111;
+            color: white;
+        }
+
+        .header {
+            background: #172b3a;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            color: #00ffcc;
+        }
+
+        #chat {
+            height: 70vh;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .message {
+            margin: 10px 0;
+            padding: 12px;
+            border-radius: 10px;
+            max-width: 80%;
+        }
+
+        .user {
+            background: #00ffcc;
+            color: black;
+            margin-left: auto;
+        }
+
+        .megan {
+            background: #333;
+            margin-right: auto;
+        }
+
+        .input-area {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 15px;
+            background: #222;
+            display: flex;
+            gap: 10px;
+        }
+
+        #message {
+            flex: 1;
+            padding: 15px;
+            border-radius: 10px;
+            border: none;
+        }
+
+        button {
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            background: #00ffcc;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>MEGAN</h1>
+        <p>Multi-Expert Generative Assistant Network</p>
+    </div>
+
+
+    <div id="chat"></div>
+
+
+    <div class="input-area">
+
+        <input
+            id="message"
+            type="text"
+            placeholder="Talk to Megan..."
+        >
+
+        <button onclick="sendMessage()">
+            Send
+        </button>
+
+    </div>
+
+
+    <script>
+
+        async function sendMessage() {
+
+            const input =
+                document.getElementById("message");
+
+            const message =
+                input.value.trim();
+
+            if (!message) {
+                return;
+            }
+
+
+            addMessage(
+                "You",
+                message,
+                "user"
+            );
+
+            input.value = "";
+
+
+            try {
+
+                const response =
+                    await fetch("/chat", {
+
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            message: message
+                        })
+
+                    });
+
+
+                const data =
+                    await response.json();
+
+
+                addMessage(
+                    "MEGAN",
+                    data.reply,
+                    "megan"
+                );
+
+
+            } catch (error) {
+
+                addMessage(
+                    "MEGAN",
+                    "I couldn't connect to the server.",
+                    "megan"
+                );
+
+            }
+
+        }
+
+
+        function addMessage(sender, text, type) {
+
+            const chat =
+                document.getElementById("chat");
+
+            const message =
+                document.createElement("div");
+
+            message.className =
+                "message " + type;
+
+            message.innerHTML =
+                "<b>" + sender + ":</b> " + text;
+
+            chat.appendChild(message);
+
+            chat.scrollTop =
+                chat.scrollHeight;
+
+        }
+
+
+        document
+            .getElementById("message")
+            .addEventListener("keypress", function(event) {
+
+                if (event.key === "Enter") {
+                    sendMessage();
+                }
+
+            });
+
+    </script>
+
+</body>
+
+</html>
